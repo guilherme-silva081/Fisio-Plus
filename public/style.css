@@ -1,0 +1,207 @@
+/* Estilos anteriores mantidos */
+        .navbar-custom {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        }
+        
+        .card-custom {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card-custom:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header-custom {
+            background: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
+            border-radius: 15px 15px 0 0 !important;
+            border-bottom: 1px solid #e3e3e3;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            border: none;
+            color: white;
+        }
+        
+        .btn-primary-custom:hover {
+            background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
+            color: white;
+        }
+        
+        .sales-panel {
+            background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+            padding: 20px;
+            border-radius: 15px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .weather-info {
+            background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .badge-alimentos {
+            background-color: #ff6b6b;
+        }
+        
+        .badge-limpeza {
+            background-color: #4ecdc4;
+        }
+        
+        .badge-outros {
+            background-color: #ffe66d;
+            color: #333;
+        }
+        
+        .low-stock {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        
+        .good-stock {
+            color: #1a936f;
+        }
+        
+        .high-stock {
+            color: #114b5f;
+        }
+        
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+            font-size: 16px;
+            line-height: 24px;
+            font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+            color: #555;
+        }
+        
+        .invoice-box table {
+            width: 100%;
+            line-height: inherit;
+            text-align: left;
+        }
+        
+        .invoice-box table td {
+            padding: 5px;
+            vertical-align: top;
+        }
+        
+        .invoice-box table tr td:nth-child(2) {
+            text-align: right;
+        }
+        
+        .invoice-box table tr.top table td {
+            padding-bottom: 20px;
+        }
+        
+        .invoice-box table tr.top table td.title {
+            font-size: 45px;
+            line-height: 45px;
+            color: #333;
+        }
+        
+        .invoice-box table tr.information table td {
+            padding-bottom: 40px;
+        }
+        
+        .invoice-box table tr.heading td {
+            background: #eee;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+        }
+        
+        .invoice-box table tr.details td {
+            padding-bottom: 20px;
+        }
+        
+        .invoice-box table tr.item td {
+            border-bottom: 1px solid #eee;
+        }
+        
+        .invoice-box table tr.item.last td {
+            border-bottom: none;
+        }
+        
+        .invoice-box table tr.total td:nth-child(2) {
+            border-top: 2px solid #eee;
+            font-weight: bold;
+        }
+        
+        .report-card {
+            transition: all 0.3s ease;
+        }
+        
+        .report-card:hover {
+            transform: scale(1.03);
+        }
+        
+        .cart-items {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .cart-total {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #eee;
+        }
+        
+        /* Estilos para o sistema de login */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            padding: 20px;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+        }
+        
+        .user-info {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .sync-status {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .online {
+            color: #28a745;
+        }
+        
+        .offline {
+            color: #dc3545;
+        }
+        
+        .syncing {
+            color: #ffc107;
+        }

@@ -1,0 +1,19 @@
+{
+  "name": "clinica-fisioterapia",
+  "version": "1.0.0",
+  "description": "Sistema completo de gestão de clínica com Node.js, Express e SQLite.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "sqlite3": "^5.1.7"
+  }
+}
