@@ -19,8 +19,8 @@ let syncInterval = null;
 // Estrutura para armazenar dados de todos os usuários
 let dadosUsuarios = {};
 
-// ========== CONFIGURAÇÃO: CRIAR CONTA APENAS PARA DESENVOLVEDOR ==========
-const MODO_CRIAR_CONTA_DESENVOLVEDOR = false; // Alterado para false para permitir cadastros
+// ========== CONFIGURAÇÃO: CRIAR CONTA APENAS PARA ADMIN ==========
+const MODO_CRIAR_CONTA_APENAS_ADMIN = true;
 
 // ========== VARIÁVEIS DO SISTEMA DE FISIOTERAPIA ==========
 let pacientes = [];
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Adiciona componentes do sistema de autenticação
     adicionarCSSMobile();
-    adicionarBotaoDesenvolvedor();
+    adicionarBotaoAdmin();
     adicionarBotaoSincronizacao();
     adicionarLinkSecreto();
     adicionarBotaoDebug();
@@ -116,7 +116,7 @@ async function criarAdminPadrao() {
                 id: 'admin-' + Date.now(),
                 nome: 'Administrador',
                 email: 'admin',
-                senha: 'admin', // SENHA PADRÃO
+                senha: 'admin',
                 dataCadastro: new Date().toISOString(),
                 criadoPor: 'sistema',
                 isAdmin: true
@@ -155,7 +155,7 @@ async function login() {
         
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
         localStorage.setItem('rememberMe', 'true');
-        localStorage.setItem('senhaDesenvolvedor', 'admin');
+        localStorage.setItem('senhaAdmin', 'admin');
         
         showMainContent();
         alert('🎉 Bem-vindo, Administrador!');
@@ -232,7 +232,14 @@ async function login() {
     }
 }
 
+// ========== FUNÇÃO DE REGISTRO APENAS PARA ADMIN ==========
 async function register() {
+    // VERIFICAÇÃO: Apenas admin pode criar contas
+    if (MODO_CRIAR_CONTA_APENAS_ADMIN && !verificarSeEAdmin()) {
+        alert('❌ CRIAÇÃO DE CONTA RESTRITA!\n\nApenas o administrador do sistema pode criar novas contas.\n\nEntre em contato com o administrador para solicitar acesso.');
+        return;
+    }
+
     const name = document.getElementById('register-name').value;
     const email = document.getElementById('register-email').value;
     const password = document.getElementById('register-password').value;
@@ -281,7 +288,8 @@ async function register() {
             email: email,
             senha: password,
             dataCadastro: new Date().toISOString(),
-            criadoPor: currentUser ? currentUser.email : 'auto-cadastro'
+            criadoPor: currentUser ? currentUser.email : 'admin',
+            isAdmin: false
         };
         
         usuarios.push(novoUsuario);
@@ -290,7 +298,7 @@ async function register() {
         const sucesso = await salvarUsuarios(usuarios);
         
         if (sucesso) {
-            alert('✅ Conta criada com sucesso! Agora você pode fazer login.');
+            alert('✅ Conta criada com sucesso! O usuário já pode fazer login.');
             showLoginForm();
             
             // Limpa o formulário
@@ -310,7 +318,37 @@ async function register() {
     }
 }
 
+// ========== FUNÇÃO PARA VERIFICAR SE É ADMIN ==========
+function verificarSeEAdmin() {
+    if (!currentUser) {
+        console.log('❌ Nenhum usuário logado');
+        return false;
+    }
+    
+    const emailAdmin = 'admin';
+    if (currentUser.email === emailAdmin) {
+        console.log('✅ Usuário é admin (email)');
+        return true;
+    }
+    
+    const senhaAdmin = 'admin';
+    const senhaInserida = localStorage.getItem('senhaAdmin');
+    if (senhaInserida === senhaAdmin) {
+        console.log('✅ Usuário é admin (senha)');
+        return true;
+    }
+    
+    console.log('❌ Usuário não é admin:', currentUser.email);
+    return false;
+}
+
 function showRegisterForm() {
+    // VERIFICAÇÃO: Apenas admin pode acessar formulário de registro
+    if (MODO_CRIAR_CONTA_APENAS_ADMIN && !verificarSeEAdmin()) {
+        alert('🔒 ACESSO RESTRITO!\n\nA criação de novas contas está disponível apenas para o administrador do sistema.\n\nSe você precisa de uma conta, entre em contato com o administrador.');
+        return;
+    }
+    
     document.getElementById('login-form').classList.add('d-none');
     document.getElementById('register-form').classList.remove('d-none');
 }
@@ -325,17 +363,29 @@ function configurarVisibilidadeRegistro() {
     const registerLink = document.querySelector('a[href="#"]');
     const loginContainer = document.getElementById('login-container');
     
-    if (MODO_CRIAR_CONTA_DESENVOLVEDOR && loginContainer) {
+    if (MODO_CRIAR_CONTA_APENAS_ADMIN && loginContainer) {
         if (registerLink) {
-            registerLink.innerHTML = '🔒 Criar Conta (Apenas Desenvolvedor)';
-            registerLink.style.color = '#ffc107';
-            registerLink.style.fontWeight = 'bold';
+            if (verificarSeEAdmin()) {
+                registerLink.innerHTML = '👑 Criar Conta (Admin)';
+                registerLink.style.color = '#ffc107';
+                registerLink.style.fontWeight = 'bold';
+            } else {
+                registerLink.innerHTML = '🔒 Criar Conta (Apenas Admin)';
+                registerLink.style.color = '#6c757d';
+                registerLink.style.fontWeight = 'normal';
+                registerLink.style.cursor = 'not-allowed';
+                registerLink.onclick = function(e) {
+                    e.preventDefault();
+                    alert('🔒 ACESSO RESTRITO!\n\nApenas o administrador pode criar novas contas.\n\nEntre em contato com o administrador para solicitar acesso.');
+                };
+            }
         }
     } else {
         if (registerLink) {
             registerLink.innerHTML = '📝 Criar Conta';
             registerLink.style.color = '';
             registerLink.style.fontWeight = '';
+            registerLink.style.cursor = '';
         }
     }
 }
@@ -565,13 +615,10 @@ async function buscarUsuarios() {
         if (!Array.isArray(usuarios)) {
             console.warn('⚠️ Dados não são array, convertendo...', usuarios);
             
-            // Se for um objeto, tenta extrair valores
             if (typeof usuarios === 'object' && usuarios !== null) {
-                // Verifica se tem propriedade 'usuarios'
                 if (usuarios.usuarios && Array.isArray(usuarios.usuarios)) {
                     usuarios = usuarios.usuarios;
                 } else {
-                    // Converte objeto para array de valores
                     usuarios = Object.values(usuarios);
                 }
             } else {
@@ -600,7 +647,6 @@ async function salvarUsuarios(usuarios) {
     try {
         console.log('💾 Salvando usuários no JSONBin...');
         
-        // GARANTE que é um array antes de salvar
         if (!Array.isArray(usuarios)) {
             console.warn('⚠️ Tentativa de salvar não-array, convertendo...');
             usuarios = [];
@@ -643,14 +689,14 @@ function adicionarCSSMobile() {
                 min-height: 50px;
             }
             
-            #botao-desenvolvedor {
+            #botao-admin {
                 bottom: 130px !important;
                 right: 10px !important;
                 font-size: 14px !important;
                 padding: 10px 14px !important;
             }
             
-            #botao-sair-desenvolvedor {
+            #botao-sair-admin {
                 bottom: 180px !important;
                 right: 10px !important;
                 font-size: 12px !important;
@@ -682,8 +728,8 @@ function adicionarCSSMobile() {
         
         @media (hover: none) and (pointer: coarse) {
             #botao-sincronizar:active,
-            #botao-desenvolvedor:active,
-            #botao-sair-desenvolvedor:active,
+            #botao-admin:active,
+            #botao-sair-admin:active,
             #botao-debug:active {
                 transform: scale(0.95);
                 opacity: 0.8;
@@ -798,13 +844,13 @@ function adicionarBotaoSincronizacao() {
     }, 3000);
 }
 
-function adicionarBotaoDesenvolvedor() {
+function adicionarBotaoAdmin() {
     setTimeout(() => {
-        const isDesenvolvedor = verificarSeEDesenvolvedor();
+        const isAdmin = verificarSeEAdmin();
         
-        if (isDesenvolvedor) {
-            const botaoExistente = document.getElementById('botao-desenvolvedor');
-            const botaoSairExistente = document.getElementById('botao-sair-desenvolvedor');
+        if (isAdmin) {
+            const botaoExistente = document.getElementById('botao-admin');
+            const botaoSairExistente = document.getElementById('botao-sair-admin');
             if (botaoExistente) botaoExistente.remove();
             if (botaoSairExistente) botaoSairExistente.remove();
             
@@ -812,7 +858,7 @@ function adicionarBotaoDesenvolvedor() {
             botao.innerHTML = '👁️ Cadastros';
             botao.className = 'btn btn-warning btn-sm btn-flutuante';
             botao.onclick = verCadastros;
-            botao.id = 'botao-desenvolvedor';
+            botao.id = 'botao-admin';
             
             botao.style.position = 'fixed';
             botao.style.bottom = '130px';
@@ -828,10 +874,10 @@ function adicionarBotaoDesenvolvedor() {
             document.body.appendChild(botao);
             
             const botaoSair = document.createElement('button');
-            botaoSair.innerHTML = '🚪 Sair Dev';
+            botaoSair.innerHTML = '🚪 Sair Admin';
             botaoSair.className = 'btn btn-danger btn-sm btn-flutuante';
-            botaoSair.onclick = sairModoDesenvolvedor;
-            botaoSair.id = 'botao-sair-desenvolvedor';
+            botaoSair.onclick = sairModoAdmin;
+            botaoSair.id = 'botao-sair-admin';
             
             botaoSair.style.position = 'fixed';
             botaoSair.style.bottom = '180px';
@@ -851,10 +897,10 @@ function adicionarBotaoDesenvolvedor() {
 
 function adicionarLinkSecreto() {
     const loginContainer = document.getElementById('login-container');
-    if (loginContainer && !verificarSeEDesenvolvedor()) {
+    if (loginContainer && !verificarSeEAdmin()) {
         const linkSecreto = document.createElement('a');
         linkSecreto.href = '#';
-        linkSecreto.innerHTML = '🔧 Acesso Desenvolvedor';
+        linkSecreto.innerHTML = '🔧 Acesso Admin';
         linkSecreto.style.position = 'fixed';
         linkSecreto.style.top = '10px';
         linkSecreto.style.right = '10px';
@@ -863,39 +909,21 @@ function adicionarLinkSecreto() {
         linkSecreto.style.textDecoration = 'none';
         linkSecreto.onclick = function(e) {
             e.preventDefault();
-            ativarModoDesenvolvedor();
+            ativarModoAdmin();
         };
         document.body.appendChild(linkSecreto);
     }
 }
 
-// ========== FUNÇÕES DO DESENVOLVEDOR ==========
+// ========== FUNÇÕES DO ADMIN ==========
 
-function verificarSeEDesenvolvedor() {
-    const emailDesenvolvedor = 'admin';
-    const usuarioLogado = JSON.parse(localStorage.getItem('currentUser') || '{}');
+function ativarModoAdmin() {
+    const senha = prompt('🔐 Digite a senha de administrador:');
+    const senhaAdmin = 'admin';
     
-    if (usuarioLogado.email && usuarioLogado.email === emailDesenvolvedor) {
-        return true;
-    }
-    
-    const senhaMestra = 'admin';
-    const senhaInserida = localStorage.getItem('senhaDesenvolvedor');
-    
-    if (senhaInserida === senhaMestra) {
-        return true;
-    }
-    
-    return false;
-}
-
-function ativarModoDesenvolvedor() {
-    const senha = prompt('🔐 Digite a senha de desenvolvedor:');
-    const senhaMestra = 'admin';
-    
-    if (senha === senhaMestra) {
-        localStorage.setItem('senhaDesenvolvedor', senha);
-        alert('✅ Modo desenvolvedor ativado! Recarregando página...');
+    if (senha === senhaAdmin) {
+        localStorage.setItem('senhaAdmin', senha);
+        alert('✅ Modo administrador ativado! Recarregando página...');
         setTimeout(() => {
             location.reload();
         }, 1000);
@@ -904,14 +932,14 @@ function ativarModoDesenvolvedor() {
     }
 }
 
-function sairModoDesenvolvedor() {
-    if (confirm('🚪 Sair do modo desenvolvedor?\n\nIsso irá remover seu acesso especial.')) {
-        localStorage.removeItem('senhaDesenvolvedor');
+function sairModoAdmin() {
+    if (confirm('🚪 Sair do modo administrador?\n\nIsso irá remover seu acesso especial.')) {
+        localStorage.removeItem('senhaAdmin');
         const usuarioLogado = JSON.parse(localStorage.getItem('currentUser') || '{}');
         if (usuarioLogado.email === 'admin') {
             logout();
         } else {
-            alert('✅ Modo desenvolvedor desativado! Recarregando página...');
+            alert('✅ Modo administrador desativado! Recarregando página...');
             setTimeout(() => {
                 location.reload();
             }, 1000);
@@ -922,8 +950,8 @@ function sairModoDesenvolvedor() {
 // ========== FUNÇÕES PARA GERENCIAR USUÁRIOS ==========
 
 async function verCadastros() {
-    if (!verificarSeEDesenvolvedor()) {
-        alert('❌ ACESSO RESTRITO!\n\nEsta função é apenas para o desenvolvedor do sistema.');
+    if (!verificarSeEAdmin()) {
+        alert('❌ ACESSO RESTRITO!\n\nEsta função é apenas para o administrador do sistema.');
         return;
     }
     
@@ -945,7 +973,6 @@ async function verCadastros() {
 
 // ========== FUNÇÃO PARA CRIAR MODAL DE USUÁRIOS ==========
 function criarModalUsuarios(usuarios) {
-    // Remove modal existente se houver
     const modalExistente = document.getElementById('modalUsuarios');
     if (modalExistente) {
         modalExistente.remove();
@@ -1066,25 +1093,20 @@ async function excluirUsuario(usuarioId, usuarioNome) {
             return;
         }
         
-        // Remove o usuário do array
         usuarios.splice(usuarioIndex, 1);
         
-        // Salva no JSONBin
         const sucesso = await salvarUsuarios(usuarios);
         
         if (sucesso) {
-            // Remove a linha da tabela
             const linha = document.getElementById(`user-row-${usuarioId}`);
             if (linha) {
                 linha.remove();
             }
             
-            // Atualiza contador
             atualizarContadorUsuarios();
             
             alert(`✅ Usuário "${usuarioNome}" excluído com sucesso!`);
             
-            // Se excluiu o usuário atual, faz logout
             if (currentUser && currentUser.id === usuarioId) {
                 alert('⚠️ Você excluiu sua própria conta. Fazendo logout...');
                 setTimeout(() => {
@@ -1126,7 +1148,6 @@ async function criarUsuarioAdmin() {
     try {
         const usuarios = await buscarUsuarios();
         
-        // Verifica se email já existe
         const emailExiste = usuarios.some(user => user.email.toLowerCase() === email.toLowerCase());
         if (emailExiste) {
             alert('❌ Este email já está cadastrado!');
@@ -1149,7 +1170,6 @@ async function criarUsuarioAdmin() {
         if (sucesso) {
             alert(`✅ Administrador "${nome}" criado com sucesso!\n\nEmail: ${email}\nSenha: ${senha}`);
             
-            // Recarrega a modal para mostrar o novo usuário
             const modal = bootstrap.Modal.getInstance(document.getElementById('modalUsuarios'));
             modal.hide();
             setTimeout(() => {
@@ -1177,11 +1197,9 @@ function exportarUsuarios() {
         const linhaArray = [];
         
         colunas.forEach((coluna, index) => {
-            // Pula a coluna de ações (última coluna)
             if (index < colunas.length - 1) {
                 let texto = coluna.innerText;
                 
-                // Para coluna de senha, pega o valor do input
                 if (coluna.querySelector('.senha-input')) {
                     texto = coluna.querySelector('.senha-input').value;
                 }
@@ -1310,13 +1328,11 @@ function loadUserData() {
 // ========== SISTEMA DE FISIOTERAPIA - FUNÇÕES ORIGINAIS ==========
 
 function inicializarDadosFisioterapia() {
-    // Configura data atual
     const now = new Date();
     if (document.getElementById('current-date')) {
         document.getElementById('current-date').textContent = now.toLocaleDateString('pt-BR');
     }
 
-    // Configura navegação
     const navInicio = document.getElementById('nav-inicio');
     const navConsultas = document.getElementById('nav-consultas');
     const navRelatorios = document.getElementById('nav-relatorios');
@@ -1348,13 +1364,11 @@ function inicializarDadosFisioterapia() {
         mostrarPagina('relatorio-diario');
     });
 
-    // Adiciona evento para filtrar pacientes
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
         searchInput.addEventListener('input', filtrarPacientes);
     }
 
-    // Atualiza todas as visualizações
     atualizarTabelaPacientes();
     atualizarAgendaHoje();
     atualizarRelatorios();
@@ -1460,6 +1474,16 @@ function realizarSessao(pacienteId) {
         return;
     }
     
+    // MODIFICAÇÃO: Permitir escolher o valor da consulta
+    const valorInput = prompt('Digite o valor da consulta (R$):', '120.00');
+    if (!valorInput) return;
+    
+    const valor = parseFloat(valorInput.replace(',', '.'));
+    if (isNaN(valor) || valor <= 0) {
+        alert('Valor inválido!');
+        return;
+    }
+    
     paciente.sessoesRealizadas++;
     
     const consulta = {
@@ -1468,7 +1492,7 @@ function realizarSessao(pacienteId) {
         pacienteNome: paciente.nome,
         data: new Date().toISOString(),
         procedimento: 'Fisioterapia Convencional',
-        valor: 120.00,
+        valor: valor,
         duracao: 60,
         status: 'realizado'
     };
@@ -1490,24 +1514,50 @@ function realizarSessao(pacienteId) {
     
     salvarDadosUsuarioAtual();
     atualizarTabelaPacientes();
-    alert('Sessão registrada com sucesso para ' + paciente.nome);
+    alert(`Sessão registrada com sucesso para ${paciente.nome}! Valor: R$ ${valor.toFixed(2)}`);
 }
 
+// MODIFICAÇÃO: Agendar com data, hora e valor personalizado
 function agendarConsulta(pacienteId) {
     const paciente = pacientes.find(p => p.id === pacienteId);
     if (!paciente) return;
     
+    // Solicitar data
+    const dataInput = prompt('Digite a data para a consulta (DD/MM/AAAA):', new Date().toLocaleDateString('pt-BR'));
+    if (!dataInput) return;
+    
+    // Validar data
+    const [dia, mes, ano] = dataInput.split('/');
+    const dataConsulta = new Date(ano, mes - 1, dia);
+    if (isNaN(dataConsulta.getTime())) {
+        alert('Data inválida! Use o formato DD/MM/AAAA');
+        return;
+    }
+    
+    // Solicitar hora
     const hora = prompt('Digite o horário para a consulta (ex: 14:30):');
     if (!hora) return;
+    
+    // Solicitar valor
+    const valorInput = prompt('Digite o valor da consulta (R$):', '120.00');
+    if (!valorInput) return;
+    
+    const valor = parseFloat(valorInput.replace(',', '.'));
+    if (isNaN(valor) || valor <= 0) {
+        alert('Valor inválido!');
+        return;
+    }
     
     const consulta = {
         id: nextConsultaId++,
         pacienteId: paciente.id,
         pacienteNome: paciente.nome,
-        data: new Date().toISOString(),
+        data: dataConsulta.toISOString(),
+        dataAgendamento: new Date().toISOString(),
+        dataDisplay: dataInput,
         hora: hora,
         procedimento: 'Fisioterapia Convencional',
-        valor: 120.00,
+        valor: valor,
         duracao: 60,
         status: 'agendado'
     };
@@ -1515,7 +1565,7 @@ function agendarConsulta(pacienteId) {
     agendaHoje.push(consulta);
     salvarDadosUsuarioAtual();
     atualizarAgendaHoje();
-    alert('Consulta agendada para ' + hora);
+    alert(`Consulta agendada para ${dataInput} às ${hora}! Valor: R$ ${valor.toFixed(2)}`);
 }
 
 function editarPaciente(pacienteId) {
@@ -1561,11 +1611,23 @@ function atualizarAgendaHoje() {
     if (agendaEmpty) agendaEmpty.classList.add('d-none');
     if (agendaItems) agendaItems.classList.remove('d-none');
     
+    // Ordenar agenda por data e hora
+    agendaHoje.sort((a, b) => {
+        const dataA = new Date(a.data);
+        const dataB = new Date(b.data);
+        return dataA - dataB;
+    });
+    
     agendaHoje.forEach(consulta => {
         const agendaItem = document.createElement('div');
         agendaItem.className = 'agenda-item';
+        
+        // MODIFICAÇÃO: Mostrar data e hora no agendamento
+        const dataDisplay = consulta.dataDisplay || new Date(consulta.data).toLocaleDateString('pt-BR');
+        
         agendaItem.innerHTML = `
-            <div>${consulta.hora} - ${consulta.pacienteNome}</div>
+            <div><strong>${dataDisplay} ${consulta.hora}</strong></div>
+            <div>${consulta.pacienteNome}</div>
             <div>${consulta.procedimento}</div>
             <div>R$ ${consulta.valor.toFixed(2)}</div>
             <button class="btn btn-success btn-sm" onclick="realizarConsulta(${consulta.id})">
@@ -1577,7 +1639,7 @@ function atualizarAgendaHoje() {
     
     const consultasHojeElement = document.getElementById('consultas-hoje');
     if (consultasHojeElement) {
-        consultasHojeElement.textContent = `Consultas hoje: ${agendaHoje.length}`;
+        consultasHojeElement.textContent = `Consultas agendadas: ${agendaHoje.length}`;
     }
 }
 
