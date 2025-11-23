@@ -376,8 +376,8 @@ function configurarVisibilidadeRegistro() {
                 registerLink.style.color = '#4dff07ff';
                 registerLink.style.fontWeight = 'bold';
             } else {
-                registerLink.innerHTML = '🔒 Criar Conta (Apenas Admin)';
-                registerLink.style.color = '#6c757d';
+                registerLink.innerHTML = 'Fisio Plus';
+                registerLink.style.color = '#4dff07ff';
                 registerLink.style.fontWeight = 'normal';
                 registerLink.style.cursor = 'not-allowed';
                 registerLink.onclick = function(e) {
