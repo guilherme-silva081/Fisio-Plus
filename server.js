@@ -7,7 +7,7 @@ const app = express();
 const PORT = 4000;
 
 // Banco de dados
-const DB_PATH = path.join(__dirname, "db", "database.db");
+const DB_PATH = path.join(__dirname, "db", "lojinha.db");
 const db = new sqlite3.Database(DB_PATH);
 
 // Middleware
